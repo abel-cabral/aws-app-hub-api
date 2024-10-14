@@ -14,9 +14,10 @@ class EC2Controler {
       }
 
       const imageList = stdout.split('\n').filter(line => line).map(line => {
-        console.log(line)
-          const [image, tag, id,size, tio] = line.split(' ');
-          return { image, tag, id, size, tio };
+        
+          const [imageWithTag, id,size, unit] = line.split(' ');
+          const [image, tag] = imageWithTag.split(':');
+          return { image, tag, id, size, unit };
       });
 
       res.json(imageList);
