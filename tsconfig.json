@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
-    "module": "ESNext",  // ou "ESModule"
+    "target": "es5",                          
+    "module": "commonjs",                    
+    "lib": ["es6"],                     
+    "allowJs": true,
+    "outDir": "build",                          
+    "rootDir": "src",
+    "strict": true,         
+    "noImplicitAny": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "target": "ESNext",  // ou "ES2020"
-    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true
-  },
-  "include": ["src/**/*"]
+  }
 }
