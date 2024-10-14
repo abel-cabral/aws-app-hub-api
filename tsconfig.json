@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",  // ou "ESModule"
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "target": "ESNext",  // ou "ES2020"
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"]
+}
