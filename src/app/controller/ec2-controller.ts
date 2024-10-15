@@ -1,6 +1,5 @@
 import { exec } from 'child_process';
 import { Request, Response } from 'express';
-import { gitHubService } from '../service/ec2-service';
 
 class EC2Controler {
   public listarImages(req: Request, res: Response) {
@@ -152,16 +151,6 @@ class EC2Controler {
         res.json('All Docker Data has been deleted');
       }
     );
-  }
-
-  public async createDockerCompose(req: Request, res: Response) {
-    const { fileUrl } = req.body;
-        try {
-            await gitHubService.downloadFileFromGitHub(fileUrl);
-            res.status(200).json({ message: 'docker-compose file has been create!' });
-        } catch (error: any) {
-            res.status(500).json({ message: 'Error while creating docker-compose', error: error?.message });
-        }
   }
 }
 

@@ -1,0 +1,206 @@
+version: "3.8"
+
+services:
+  ##########################################################################################
+  #                                                                                        #
+  #                                    SUAS APLICAÇÕES                                     #
+  #                                                                                        #
+  ##########################################################################################
+  
+  # App 01
+  simple-sum:
+      image: ozteps/simple-sum:latest # Substitua "ozteps/simple-sum:latest" pela imagem da sua própria aplicação. Pode ser qualquer imagem do Docker Hub ou de um registro privado.
+      deploy:
+        replicas: 1 # Define que apenas 1 réplica (contêiner) da aplicação será executada.
+        update_config:
+          parallelism: 1 # Atualiza 1 contêiner por vez ao fazer o update.
+          delay: 10s # Espera 10 segundos entre a atualização de cada contêiner.
+        resources:
+          limits:
+            memory: 32M # Limite de memória para o contêiner. Ajuste conforme a necessidade da sua aplicação.
+            # Atenção: definir pouca memória para um serviço que precisa de muita pode fazer o contêiner falhar. 
+      ports:
+        - "9001:80" # Mapeia a porta 9001 no host para a porta 80 no contêiner, permitindo o acesso à aplicação via http://host:9001.
+
+  # App 02
+  blink:
+    image: ozteps/blink:latest
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          memory: 32M
+    ports:
+      - "9002:80"
+
+  # App 03
+  blink-api:
+    image: ozteps/blink-api:latest
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          memory: 128M
+    ports:
+      - "8002:8080"
+    environment:
+      - DATABASE=mongodb+srv://<CENSURADO>@cluster0.s9efpek.mongodb.net/blink?retryWrites=true&w=majority&appName=Cluster0
+
+  # App 04
+  cryptlink:
+    image: ozteps/cryptlink:latest
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          memory: 32M
+    ports:
+      - "9003:80"
+
+  # App 05
+  # cryptlink-api:
+  #   image: ozteps/cryptlink-api:latest
+  #   deploy:
+  #     replicas: 1
+  #     update_config:
+  #       parallelism: 1
+  #       delay: 10s
+  #     resources:
+  #       limits:
+  #         memory: 96M
+  #   ports:
+  #     - "8003:8080"
+  #   environment:
+  #     - DATABASE=mongodb+srv://<CENSURADO>@cluster0.s9efpek.mongodb.net/cryptlink
+  #     - DATABASE_NAME=secret-links
+
+  # App 06
+  cardsage-api:
+    image: ozteps/cardsage-api:latest
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          memory: 256M
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=<CENSURADO>
+      - PROJECT_ID=<CENSURADO>
+      - ORGANIZATION=<CENSURADO>
+      - DBHOST=mongodb+srv://<CENSURADO>@cluster0.s9efpek.mongodb.net/blink?retryWrites=true&w=majority&appName=Cluster0
+      - DATABASE=CardSage
+      - COLLECTION=catalogo-de-links
+      - JWT_SECRET_KEY=<CENSURADO>
+      - SECRET_KEY=<CENSURADO>
+      - JWT_ACCESS_TOKEN_EXPIRES=30
+      - REDIS_URL=redis://default:<CENSURADO>@redis-10663.c308.sa-east-1-1.ec2.redns.redis-cloud.com:10663
+      - MODE=production
+      - TAGLIST=Inovação,Games,Filmes,Séries,Animes,Notícias,Desenvolvimento,Festas,Cursos,Saúde,Educação,Ciência,RedesSociais,Música,Livros,Moda,Culinária,Viagens,Arte,Promoções
+
+  # App 07
+  db_mysql:
+    image: mysql:latest
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256M
+    environment:
+      MYSQL_ROOT_PASSWORD: <CENSURADO>
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: <CENSURADO>
+    ports:
+      - "3306:3306"
+    volumes:
+      - banco_relacional:/var/lib/mysql
+    networks:
+      - abel_network
+
+  # App 07
+  phpmyadmin:
+    image: phpmyadmin:latest
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 128M
+    environment:
+      PMA_HOST: db_mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - 9004:80
+    depends_on:
+      - db_mysql
+    networks:
+      - abel_network
+  
+
+  ##########################################################################################
+  #                                                                                        #
+  #                                SERVIÇOS COMPLEMENTARES                                 #
+  #                                                                                        #
+  ##########################################################################################
+  
+  # REMOVE IMAGENS E CONTÊINERES QUE NÃO ESTÃO EM USO
+  cleaner:
+    image: alpine:latest
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 32M
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: /bin/sh -c "apk add --no-cache docker-cli && while true; do docker system prune -af --filter 'until=24h'; sleep 3600; done"
+
+  # MONITORA QUANDO UMA NOVA IMAGEM É PUBLICADA NO DOCKER HUB
+  watchtower:
+    image: containrrr/watchtower
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 32M
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30 --cleanup
+
+  # CONFIGURA O PROXY REVERSO PARA PERMITIR O USO DE SUBDOMÍNIOS NA PORTA 80
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    entrypoint: ["/bin/sh", "-c", "sleep 30 && nginx -g 'daemon off;'"]
+
+
+  ##########################################################################################
+  #                                                                                        #
+  #                                  Outras Configurações                                  #
+  #                                                                                        #
+  ##########################################################################################
+
+volumes:
+  banco_relacional:
+    driver: local
+
+networks:
+  abel_network:
+    driver: overlay
+    attachable: true
