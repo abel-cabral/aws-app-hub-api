@@ -10,6 +10,7 @@ router.get("/api/image/list", ec2Controler.listarImages);
 router.delete("/api/image/remove/:id", ec2Controler.removerImage);
 router.delete("/api/cluster/remove/:name", ec2Controler.removerCluster);
 router.delete("/api/docker/clean", ec2Controler.clearDocker);
-router.delete("/api/dpcler/cleanAll", ec2Controler.clearDockerAllData);
+router.delete("/api/docker/cleanAll", ec2Controler.clearDockerAllData);
+router.post("/api/docker/createCompose", ec2Controler.createDockerCompose);
 
 export { router };
