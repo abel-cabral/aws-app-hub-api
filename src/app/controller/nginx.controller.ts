@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
-import { gitHubService } from '../service/ec2-service';
 import { NginxClass } from '../model/nginx.model';
 import { exec } from 'child_process';
+import { downloadFileFromGitHub } from '../service/ec2-service';
 
 class NginxController {
     public async createNginxConfig(req: Request, res: Response) {
-        const { filedominio } = req.body;
+        const { fileUrl } = req.body;
         try {
-            await gitHubService.downloadFileFromGitHub(filedominio);
-            res.status(200).json({ message: 'nginx.config file has been create!' });
+            await downloadFileFromGitHub(fileUrl, 'nginx/nginx.conf');
+            res.status(200).json({ message: 'nginx.config gerado com sucesso' });
         } catch (error: any) {
-            res.status(500).json({ message: 'Error while creating docker-compose', error: error?.message });
+            res.status(500).json({ message: error?.message });
         }
     }
 
@@ -54,3 +54,7 @@ class NginxController {
 }
 
 export const nginxController = new NginxController();
+
+function downloadFile(fileUrl: any, arg1: string) {
+    throw new Error('Function not implemented.');
+}

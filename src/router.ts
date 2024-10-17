@@ -13,8 +13,9 @@ router.delete("/api/image/remove/:id", ec2Controler.removerImage);
 router.delete("/api/cluster/remove/:name", ec2Controler.removerCluster);
 router.delete("/api/docker/clean", ec2Controler.clearDocker);
 router.delete("/api/docker/cleanAll", ec2Controler.clearDockerAllData);
+
 router.post("/api/compose/create", dockerController.createDockerCompose);
-router.post("/api/compose/addService", dockerController.atualizarDockerCompose);
+router.put("/api/compose/addService", dockerController.atualizarDockerCompose);
 
 router.post("/api/nginx/create", nginxController.createNginxConfig);
 router.put("/api/nginx/add", nginxController.inserirServico);
