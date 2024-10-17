@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-class ApiStatusController {
+class HealthController {
   public health(req: Request, res: Response) {
     return res.json({
       response: "API Online",
@@ -8,4 +8,4 @@ class ApiStatusController {
   }
 }
 
-export const apiStatusController = new ApiStatusController();
+export const healthController = new HealthController();

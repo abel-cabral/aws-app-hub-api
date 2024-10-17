@@ -2,34 +2,34 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
-export class DockerComposeClass {
+export class DockerClass {
     serviceName: string;
     tag: string;
     image: string;
-    replicas: number;
     parallelism: number;
     memory: string;
     ports: string;
+    envs: Array<string>;
 
     constructor(
         serviceName: string,
         tag: string,
         image: string,
-        replicas: number,
         parallelism: number,
         memory: string,
-        ports: string
+        ports: string,
+        envs: string[]
     ) {
         this.serviceName = serviceName;
         this.tag = tag;
         this.image = image;
-        this.replicas = replicas;
         this.parallelism = parallelism;
         this.memory = memory;
         this.ports = ports;
+        this.envs = envs;
     }
 
-    inserirServico(newEnvs: string[]) {
+    inserirServico(replicas: number) {
         // Caminho para o arquivo docker-compose.yml
         const filePath: string = path.resolve(process.cwd(), 'docker-compose.yml');
 
@@ -44,7 +44,7 @@ export class DockerComposeClass {
             const newServiceData = {
                 image: `${this.image}:${this.tag}`, // Usa os atributos da classe
                 deploy: {
-                    replicas: this.replicas,
+                    replicas: replicas,
                     update_config: {
                         parallelism: this.parallelism,
                         delay: '10s'
@@ -56,7 +56,7 @@ export class DockerComposeClass {
                     }
                 },
                 ports: this.ports,
-                environment: newEnvs
+                environment: this.envs
             };
 
             // 4. Verificar se o serviço já existe
@@ -67,7 +67,7 @@ export class DockerComposeClass {
                 if (!service.environment) {
                     service.environment = [];
                 }
-                service.environment.push(...newEnvs);
+                service.environment.push(...this.envs);
             } else {
                 // Adicionar novo serviço
                 composeFile.services[this.serviceName] = newServiceData;
