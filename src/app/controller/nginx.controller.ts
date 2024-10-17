@@ -19,10 +19,9 @@ class NginxController {
         const servico = new NginxClass(nomeServico, dominio, porta, ip);
         servico.addServico().then((status) => {
             res.status(200).json({ message: status });
-        })
-            .catch((error) => {
-                res.status(500).json({ error: error?.message });
-            });
+        }).catch((error) => {
+            res.status(500).json({ error: error?.message });
+        });
     }
 
     public async removerServico(req: Request, res: Response) {
