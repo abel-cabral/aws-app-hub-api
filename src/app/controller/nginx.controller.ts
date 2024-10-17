@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { gitHubService } from '../service/ec2-service';
 import { NginxClass } from '../model/nginx.model';
+import { exec } from 'child_process';
 
 class NginxController {
     public async createNginxConfig(req: Request, res: Response) {
@@ -19,9 +20,9 @@ class NginxController {
         servico.addServico().then((status) => {
             res.status(200).json({ message: status });
         })
-        .catch((error) => {
-            res.status(500).json({ error: error?.message });
-        });
+            .catch((error) => {
+                res.status(500).json({ error: error?.message });
+            });
     }
 
     public async removerServico(req: Request, res: Response) {
@@ -33,6 +34,22 @@ class NginxController {
             .catch((error) => {
                 res.status(500).json({ error: error?.message });
             });
+    }
+
+    public reiniciarNginx(req: Request, res: Response) {
+        exec('systemctl reload nginx', (error, stdout, stderr) => {
+            if (error) {
+                return res
+                    .status(500)
+                    .json({ error: error.message });
+            }
+            if (stderr) {
+                return res
+                    .status(500)
+                    .json({ error: stderr });
+            }
+            res.json(`Serviço Nginx Reiniciado`);
+        });
     }
 }
 
