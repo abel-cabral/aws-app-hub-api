@@ -13,13 +13,23 @@ class DockerController {
         }
     }
 
-    public async atualizarDockerCompose(req: Request, res: Response) {
+    public async inserirServico(req: Request, res: Response) {
         const { serviceName, tag, image, replicas, memory, ports, envs } = req.body;
         const service = new DockerClass(serviceName, tag, image, replicas, memory, ports, envs);
-
         try {
              // Adicionar ou modificar o serviço com novas variáveis de ambiente
             const response = await service.inserirServico();
+            res.status(200).json({ message: response });
+        } catch (error: any) {
+            res.status(500).json({ message: error?.message });
+        }
+    }
+
+    public async removerServico(req: Request, res: Response) {
+        const { serviceName } = req.body;
+        try {
+             // Adicionar ou modificar o serviço com novas variáveis de ambiente
+            const response = await DockerClass.removerServico(serviceName);
             res.status(200).json({ message: response });
         } catch (error: any) {
             res.status(500).json({ message: error?.message });

@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
+const configPath = 'docker-compose.yml'
+
 export class DockerClass {
     serviceName: string;
     tag: string;
@@ -31,7 +33,7 @@ export class DockerClass {
 
     inserirServico(parallelism = 1) {
         // Caminho para o arquivo docker-compose.yml
-        const filePath: string = path.resolve(process.cwd(), 'docker-compose.yml');
+        const filePath: string = path.resolve(process.cwd(), configPath);
 
         return new Promise((resolve, reject) => {
             try {
@@ -82,6 +84,39 @@ export class DockerClass {
                 resolve(`Serviço '${this.serviceName}' modificado ou adicionado com sucesso!`);
             } catch (error) {
                 reject(new Error('Um erro ocorreu ao inserir serviço no docker-compose.yml'))
+            }
+        });
+    }
+
+    static removerServico(serviceName: string) {
+        // Caminho para o arquivo docker-compose.yml
+        const filePath: string = path.resolve(process.cwd(), configPath);
+    
+        return new Promise((resolve, reject) => {
+            try {
+                // 1. Ler o arquivo YAML
+                const fileContents = fs.readFileSync(filePath, 'utf8');
+    
+                // 2. Fazer o parse do YAML para um objeto JavaScript
+                const composeFile = yaml.load(fileContents) as any;
+    
+                // 3. Verificar se o serviço existe
+                if (!composeFile.services) {
+                    reject(new Error(`Serviço '${serviceName}' não encontrado.`));
+                    return;
+                }
+    
+                // 4. Remover o serviço
+                delete composeFile.services[serviceName];
+    
+                // 5. Converter o objeto modificado de volta para YAML
+                const newYaml = yaml.dump(composeFile, { lineWidth: -1 });
+    
+                // 6. Escrever o novo conteúdo de volta ao arquivo
+                fs.writeFileSync(filePath, newYaml, 'utf8');
+                resolve(`Serviço ${serviceName} removido com sucesso!`);
+            } catch (error) {
+                reject(new Error('Um erro ocorreu ao remover o serviço do docker-compose.yml'));
             }
         });
     }

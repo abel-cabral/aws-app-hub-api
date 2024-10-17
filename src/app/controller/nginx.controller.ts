@@ -54,7 +54,3 @@ class NginxController {
 }
 
 export const nginxController = new NginxController();
-
-function downloadFile(fileUrl: any, arg1: string) {
-    throw new Error('Function not implemented.');
-}
