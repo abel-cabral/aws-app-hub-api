@@ -1,5 +1,5 @@
 {
-  "name": "aws-app-hub",
+  "name": "aws-app-hub-api",
   "version": "1.0.0",
   "description": "API para gerencia um hub de aplicativos em uma instancia EC2 da AWS, usando Docker e Nginx",
   "main": "app.js",
