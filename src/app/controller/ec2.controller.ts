@@ -2,6 +2,11 @@ import { exec } from 'child_process';
 import { Request, Response } from 'express';
 
 class EC2Controler {
+  constructor() {
+    // Verifica se Docker Swarm esta inicializado, senão irá inicializar
+    exec('if ! docker info | grep -q "Swarm: active"; then docker swarm init; fi');
+  }
+
   public listarImages(req: Request, res: Response) {
     exec(
       'docker image ls --format "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"',
@@ -55,34 +60,30 @@ class EC2Controler {
   }
 
   public iniciarCluster(req: Request, res: Response) {
-    const { name } = req.params;
-
     exec(
-      `docker stack deploy -c docker-compose ${name}`,
+      `docker stack deploy -c docker-compose appHubCluster`,
       (error, stdout, stderr) => {
         if (error) {
           console.error(`Erro ao executar o comando: ${error.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers' });
         }
         if (stderr) {
           console.error(`Stderr: ${stderr}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers' });
         }
 
         console.log(stdout);
-        res.json(`Cluster ${name} has been created`);
+        res.status(200).json(`Iniciando subido do cluster`);
       }
     );
   }
 
   public removerCluster(req: Request, res: Response) {
-    const { name } = req.params;
-
-    exec('docker stack rm ' + name, (error, stdout, stderr) => {
+    exec('docker stack rm appHubCluster', (error, stdout, stderr) => {
       if (error) {
         console.error(`Erro ao executar o comando: ${error.message}`);
         return res
@@ -97,7 +98,7 @@ class EC2Controler {
       }
 
       console.log(stdout);
-      res.json(`Cluster ${name} has been deleted`);
+      res.json(`Iniciando remoção do cluster`);
     });
   }
 

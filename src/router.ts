@@ -13,7 +13,9 @@ router.get("/api/check/disk", healthController.checkDisk);
 
 router.get("/api/image/list", ec2Controler.listarImages);
 router.delete("/api/image/remove/:id", ec2Controler.removerImage);
-router.delete("/api/cluster/remove/:name", ec2Controler.removerCluster);
+router.delete("/api/cluster/remove/:name", ec2Controler.removerCluster)
+router.delete("/api/docker/initCluster", ec2Controler.iniciarCluster);
+router.delete("/api/docker/removeCluster", ec2Controler.removerCluster);;
 router.delete("/api/docker/clean", ec2Controler.clearDocker);
 router.delete("/api/docker/cleanAll", ec2Controler.clearDockerAllData);
 
