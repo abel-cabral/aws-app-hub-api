@@ -1,16 +1,16 @@
 {
   "name": "aws-app-hub-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "API para gerencia um hub de aplicativos em uma instancia EC2 da AWS, usando Docker e Nginx",
   "main": "app.js",
   "type": "commonjs",
   "scripts": {
     "start:dev": "nodemon",
-    "build": "npx tsc"
+    "build": "tsc && cp -R node_modules build/"
   },
   "author": "Abel C. Arruda",
   "engines": {
-    "node": ">=20"
+    "node": ">=18"
   },
   "license": "MIT",
   "dependencies": {
