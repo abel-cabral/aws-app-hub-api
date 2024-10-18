@@ -4,7 +4,7 @@ import { exec } from 'child_process';
 import { downloadFileFromGitHub } from '../service/ec2-service';
 
 class NginxController {
-    public async createNginxConfig(req: Request, res: Response) {
+    async createNginxConfig(req: Request, res: Response) {
         const { fileUrl } = req.body;
 
         if (!fileUrl) {
@@ -19,7 +19,7 @@ class NginxController {
         }
     }
 
-    public async inserirServico(req: Request, res: Response) {
+    async inserirServico(req: Request, res: Response) {
         const { nomeServico, dominio, porta, ip } = req.body;
 
         if (!nomeServico || !dominio || !porta || !ip) {
@@ -34,7 +34,7 @@ class NginxController {
         });
     }
 
-    public async removerServico(req: Request, res: Response) {
+    async removerServico(req: Request, res: Response) {
         const { nomeServico } = req.body;
 
         if (!nomeServico) {
@@ -50,7 +50,7 @@ class NginxController {
             });
     }
 
-    public reiniciarNginx(req: Request, res: Response) {
+    reiniciarNginx(req: Request, res: Response) {
         exec('systemctl reload nginx', (error, stdout, stderr) => {
             if (error) {
                 return res

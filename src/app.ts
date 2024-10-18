@@ -1,20 +1,15 @@
 import express from "express";
 import { router } from "./router";
 
-export class App{
-  public server: express.Application = express();
+const server = express();
 
-  constructor(){
-    this.server;
-    this.middleware();
-    this.router();
-  }
+// Middleware
+server.use(express.json());
 
-  private middleware(){
-    this.server.use(express.json());
-  }
+// Router
+server.use(router);
 
-  private router(){
-    this.server.use(router);
-  }
-}
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Aplicação rodando em localhost:${PORT}`);
+});

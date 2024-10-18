@@ -3,11 +3,10 @@ import * as diskusage from 'diskusage';
 import * as path from 'path';
 import { exec } from 'child_process';
 
-class HealthController {
+export const healthController = {
   checkhealth(req: Request, res: Response) {
     return res.status(200).json({ message: 'API Online' });
-  }
-
+  },
   checkMemory(req: Request, res: Response) {
     exec('free -h', (error, stdout, stderr) => {
       if (error || stderr) {
@@ -31,8 +30,7 @@ class HealthController {
   
       res.status(200).json({ memoryInfo });
     });
-  }
-
+  },
   checkDisk(req: Request, res: Response) {
     try {
       // Caminho para verificar o disco. Use "/" no Linux/Mac e "C:\\" no Windows
@@ -58,5 +56,3 @@ class HealthController {
     }
   }
 }
-
-export const healthController = new HealthController();

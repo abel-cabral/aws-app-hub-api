@@ -7,7 +7,7 @@ class EC2Controler {
     exec('if ! docker info | grep -q "Swarm: active"; then docker swarm init; fi');
   }
 
-  public listarImages(req: Request, res: Response) {
+  listarImages(req: Request, res: Response) {
     exec(
       'docker image ls --format "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"',
       (error, stdout, stderr) => {
@@ -39,7 +39,7 @@ class EC2Controler {
     );
   }
 
-  public removerImage(req: Request, res: Response) {
+  removerImage(req: Request, res: Response) {
     const { id } = req.params;
 
     if (!id) {
@@ -65,7 +65,7 @@ class EC2Controler {
     });
   }
 
-  public iniciarCluster(req: Request, res: Response) {
+  iniciarCluster(req: Request, res: Response) {
     exec(
       `docker stack deploy -c docker-compose appHubCluster`,
       (error, stdout, stderr) => {
@@ -88,7 +88,7 @@ class EC2Controler {
     );
   }
 
-  public removerCluster(req: Request, res: Response) {
+  removerCluster(req: Request, res: Response) {
     exec('docker stack rm appHubCluster', (error, stdout, stderr) => {
       if (error) {
         console.error(`Erro ao executar o comando: ${error.message}`);
@@ -108,7 +108,7 @@ class EC2Controler {
     });
   }
 
-  public clearDocker(req: Request, res: Response) {
+  clearDocker(req: Request, res: Response) {
     exec('docker system prune -a --volumes -f', (error, stdout, stderr) => {
         if (error) {
           console.error(`Erro ao executar o comando: ${error.message}`);
@@ -129,7 +129,7 @@ class EC2Controler {
     );
   }
 
-  public clearDockerAllData(req: Request, res: Response) {
+  clearDockerAllData(req: Request, res: Response) {
     exec(
       `
         docker stop $(docker ps -q) || true

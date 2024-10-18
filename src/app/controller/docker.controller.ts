@@ -3,7 +3,7 @@ import { downloadFileFromGitHub } from '../service/ec2-service';
 import { DockerClass } from '../model/docker.model';
 
 class DockerController {
-    public async createDockerCompose(req: Request, res: Response) {
+    async createDockerCompose(req: Request, res: Response) {
         const { fileUrl } = req.body;
 
         if (!fileUrl) {
@@ -18,7 +18,7 @@ class DockerController {
         }
     }
 
-    public async inserirServico(req: Request, res: Response) {
+    async inserirServico(req: Request, res: Response) {
         const { nomeServico, tag, image, replicas, memory, ports, envs } = req.body;
 
         if (!nomeServico || !tag || !image || !replicas || !memory || !ports || !envs || typeof replicas !== 'number') {
@@ -35,7 +35,7 @@ class DockerController {
         }
     }
 
-    public async removerServico(req: Request, res: Response) {
+    async removerServico(req: Request, res: Response) {
         const { nomeServico } = req.body;
 
         if (!nomeServico) {
