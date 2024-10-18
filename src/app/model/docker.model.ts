@@ -5,7 +5,7 @@ import * as yaml from 'js-yaml';
 const configPath = 'docker-compose.yml'
 
 export class DockerClass {
-    serviceName: string;
+    nomeServico: string;
     tag: string;
     image: string;
     replicas: number;
@@ -14,7 +14,7 @@ export class DockerClass {
     envs: Array<string>;
 
     constructor(
-        serviceName: string,
+        nomeServico: string,
         tag: string,
         image: string,
         replicas: number,
@@ -22,7 +22,7 @@ export class DockerClass {
         ports: string,
         envs: string[]
     ) {
-        this.serviceName = serviceName;
+        this.nomeServico = nomeServico;
         this.tag = tag;
         this.image = image;
         this.replicas = replicas;
@@ -63,8 +63,8 @@ export class DockerClass {
                 };
 
                 // 4. Verificar se o serviço já existe
-                if (composeFile.services[this.serviceName]) {
-                    const service = composeFile.services[this.serviceName];
+                if (composeFile.services[this.nomeServico]) {
+                    const service = composeFile.services[this.nomeServico];
 
                     // Atualiza as variáveis de ambiente se existir
                     if (!service.environment) {
@@ -73,7 +73,7 @@ export class DockerClass {
                     service.environment.push(...this.envs);
                 } else {
                     // Adicionar novo serviço
-                    composeFile.services[this.serviceName] = newServiceData;
+                    composeFile.services[this.nomeServico] = newServiceData;
                 }
 
                 // 5. Converter o objeto modificado de volta para YAML
@@ -81,14 +81,14 @@ export class DockerClass {
 
                 // 6. Escrever o novo conteúdo de volta ao arquivo
                 fs.writeFileSync(filePath, newYaml, 'utf8');
-                resolve(`Serviço '${this.serviceName}' modificado ou adicionado com sucesso!`);
+                resolve(`Serviço '${this.nomeServico}' modificado ou adicionado com sucesso!`);
             } catch (error) {
                 reject(new Error('Um erro ocorreu ao inserir serviço no docker-compose.yml'))
             }
         });
     }
 
-    static removerServico(serviceName: string) {
+    static removerServico(nomeServico: string) {
         // Caminho para o arquivo docker-compose.yml
         const filePath: string = path.resolve(process.cwd(), configPath);
     
@@ -102,19 +102,19 @@ export class DockerClass {
     
                 // 3. Verificar se o serviço existe
                 if (!composeFile.services) {
-                    reject(new Error(`Serviço '${serviceName}' não encontrado.`));
+                    reject(new Error(`Serviço '${nomeServico}' não encontrado.`));
                     return;
                 }
     
                 // 4. Remover o serviço
-                delete composeFile.services[serviceName];
+                delete composeFile.services[nomeServico];
     
                 // 5. Converter o objeto modificado de volta para YAML
                 const newYaml = yaml.dump(composeFile, { lineWidth: -1 });
     
                 // 6. Escrever o novo conteúdo de volta ao arquivo
                 fs.writeFileSync(filePath, newYaml, 'utf8');
-                resolve(`Serviço ${serviceName} removido com sucesso!`);
+                resolve(`Serviço ${nomeServico} removido com sucesso!`);
             } catch (error) {
                 reject(new Error('Um erro ocorreu ao remover o serviço do docker-compose.yml'));
             }

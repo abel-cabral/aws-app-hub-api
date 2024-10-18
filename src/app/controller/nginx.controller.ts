@@ -6,6 +6,11 @@ import { downloadFileFromGitHub } from '../service/ec2-service';
 class NginxController {
     public async createNginxConfig(req: Request, res: Response) {
         const { fileUrl } = req.body;
+
+        if (!fileUrl) {
+            res.status(400).json({ error: 'Verifique o objeto enviado: { fileUrl: string' });
+        } 
+
         try {
             await downloadFileFromGitHub(fileUrl, 'nginx/nginx.conf');
             res.status(200).json({ message: 'nginx.config gerado com sucesso' });
@@ -16,6 +21,11 @@ class NginxController {
 
     public async inserirServico(req: Request, res: Response) {
         const { nomeServico, dominio, porta, ip } = req.body;
+
+        if (!nomeServico || !dominio || !porta || !ip) {
+            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string, ip: string }' });
+        } 
+
         const servico = new NginxClass(nomeServico, dominio, porta, ip);
         servico.addServico().then((status) => {
             res.status(200).json({ message: status });
@@ -26,6 +36,11 @@ class NginxController {
 
     public async removerServico(req: Request, res: Response) {
         const { nomeServico } = req.body;
+
+        if (!nomeServico) {
+            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
+        } 
+
         NginxClass.removerServico(nomeServico)
             .then((status) => {
                 res.status(200).json({ message: status });
