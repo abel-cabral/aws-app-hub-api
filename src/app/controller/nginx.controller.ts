@@ -8,7 +8,7 @@ class NginxController {
         const { fileUrl } = req.body;
 
         if (!fileUrl) {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { fileUrl: string' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { fileUrl: string' });
         } 
 
         try {
@@ -23,7 +23,7 @@ class NginxController {
         const { nomeServico, dominio, porta, ip } = req.body;
 
         if (!nomeServico || !dominio || !porta || !ip) {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string, ip: string }' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string, ip: string }' });
         } 
 
         const servico = new NginxClass(nomeServico, dominio, porta, ip);
@@ -38,7 +38,7 @@ class NginxController {
         const { nomeServico } = req.body;
 
         if (!nomeServico) {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
         } 
 
         NginxClass.removerServico(nomeServico)

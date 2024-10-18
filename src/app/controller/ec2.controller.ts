@@ -33,13 +33,19 @@ class EC2Controler {
             return { image, tag, id, size, unit };
           });
 
-        res.json(imageList);
+          console.log(stdout);
+          return res.status(200).json(imageList);
       }
     );
   }
 
   public removerImage(req: Request, res: Response) {
     const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Verifique o objeto enviado: { id: string' });
+    } 
+
     exec('docker image rm ' + id, (error, stdout, stderr) => {
       if (error) {
         console.error(`Erro ao executar o comando: ${error.message}`);
@@ -55,7 +61,7 @@ class EC2Controler {
       }
 
       console.log(stdout);
-      res.json(`Image ${id} has been deleted`);
+      return res.status(200).json(`Image ${id} has been deleted`);
     });
   }
 
@@ -77,7 +83,7 @@ class EC2Controler {
         }
 
         console.log(stdout);
-        res.status(200).json(`Iniciando subido do cluster`);
+        return res.status(200).json(`Iniciando subido do cluster`);
       }
     );
   }
@@ -98,7 +104,7 @@ class EC2Controler {
       }
 
       console.log(stdout);
-      res.json(`Iniciando remoção do cluster`);
+      return res.status(200).json(`Iniciando remoção do cluster`);
     });
   }
 
@@ -118,7 +124,7 @@ class EC2Controler {
         }
 
         console.log(stdout);
-        res.json('Docker cache has been deleted1');
+        return res.status(200).json('Docker cache has been deleted1');
       }
     );
   }
@@ -149,7 +155,7 @@ class EC2Controler {
         }
 
         console.log(stdout);
-        res.json('All Docker Data has been deleted');
+        return res.status(200).json('All Docker Data has been deleted');
       }
     );
   }

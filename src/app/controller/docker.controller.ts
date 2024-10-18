@@ -7,7 +7,7 @@ class DockerController {
         const { fileUrl } = req.body;
 
         if (!fileUrl) {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { fileUrl: string }' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { fileUrl: string }' });
         }
 
         try {
@@ -22,7 +22,7 @@ class DockerController {
         const { nomeServico, tag, image, replicas, memory, ports, envs } = req.body;
 
         if (!nomeServico || !tag || !image || !replicas || !memory || !ports || !envs || typeof replicas !== 'number') {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , tag: string, image: string, replicas: number, memory: string, ports: string, envs: string[] }' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , tag: string, image: string, replicas: number, memory: string, ports: string, envs: string[] }' });
         }
 
         const service = new DockerClass(nomeServico, tag, image, replicas, memory, ports, envs);
@@ -39,7 +39,7 @@ class DockerController {
         const { nomeServico } = req.body;
 
         if (!nomeServico) {
-            res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
         } 
 
         try {
