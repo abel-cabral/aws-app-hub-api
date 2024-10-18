@@ -1,12 +1,7 @@
 import { exec } from 'child_process';
 import { Request, Response } from 'express';
 
-class EC2Controler {
-  constructor() {
-    // Verifica se Docker Swarm esta inicializado, senão irá inicializar
-    exec('if ! docker info | grep -q "Swarm: active"; then docker swarm init; fi');
-  }
-
+export const ec2Controller =  {
   listarImages(req: Request, res: Response) {
     exec(
       'docker image ls --format "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"',
@@ -37,8 +32,7 @@ class EC2Controler {
           return res.status(200).json(imageList);
       }
     );
-  }
-
+  },
   removerImage(req: Request, res: Response) {
     const { id } = req.params;
 
@@ -63,8 +57,7 @@ class EC2Controler {
       console.log(stdout);
       return res.status(200).json(`Image ${id} has been deleted`);
     });
-  }
-
+  },
   iniciarCluster(req: Request, res: Response) {
     exec(
       `docker stack deploy -c docker-compose appHubCluster`,
@@ -86,49 +79,46 @@ class EC2Controler {
         return res.status(200).json(`Iniciando subido do cluster`);
       }
     );
-  }
-
+  },
   removerCluster(req: Request, res: Response) {
     exec('docker stack rm appHubCluster', (error, stdout, stderr) => {
       if (error) {
         console.error(`Erro ao executar o comando: ${error.message}`);
         return res
           .status(500)
-          .json({ error: 'Erro ao listar os containers do Podman' });
+          .json({ error: 'Erro ao listar os containers do docker' });
       }
       if (stderr) {
         console.error(`Stderr: ${stderr}`);
         return res
           .status(500)
-          .json({ error: 'Erro ao listar os containers do Podman' });
+          .json({ error: 'Erro ao listar os containers do docker' });
       }
 
       console.log(stdout);
       return res.status(200).json(`Iniciando remoção do cluster`);
     });
-  }
-
+  },
   clearDocker(req: Request, res: Response) {
     exec('docker system prune -a --volumes -f', (error, stdout, stderr) => {
         if (error) {
           console.error(`Erro ao executar o comando: ${error.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers do docker' });
         }
         if (stderr) {
           console.error(`Stderr: ${stderr}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers do docker' });
         }
 
         console.log(stdout);
         return res.status(200).json('Docker cache has been deleted1');
       }
     );
-  }
-
+  },
   clearDockerAllData(req: Request, res: Response) {
     exec(
       `
@@ -145,13 +135,13 @@ class EC2Controler {
           console.error(`Erro ao executar o comando: ${error.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers do docker' });
         }
         if (stderr) {
           console.error(`Stderr: ${stderr}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do Podman' });
+            .json({ error: 'Erro ao listar os containers do docker' });
         }
 
         console.log(stdout);
@@ -160,5 +150,3 @@ class EC2Controler {
     );
   }
 }
-
-export const ec2Controler = new EC2Controler();

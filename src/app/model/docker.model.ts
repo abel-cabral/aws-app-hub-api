@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 
-const configPath = 'docker-compose.yml'
+const configPath = 'docker-compose.yml';
 
 export class DockerClass {
     nomeServico: string;
@@ -10,7 +10,7 @@ export class DockerClass {
     image: string;
     replicas: number;
     memory: string;
-    ports: string;
+    ports: Array<string>; // Mantido como Array<string>
     envs: Array<string>;
 
     constructor(
@@ -19,7 +19,7 @@ export class DockerClass {
         image: string,
         replicas: number,
         memory: string,
-        ports: string,
+        ports: string[], // Aqui ainda usamos string[], mas será tratado como lista
         envs: string[]
     ) {
         this.nomeServico = nomeServico;
@@ -27,7 +27,7 @@ export class DockerClass {
         this.image = image;
         this.replicas = replicas;
         this.memory = memory;
-        this.ports = ports;
+        this.ports = ports; // Armazena como uma lista
         this.envs = envs;
     }
 
@@ -58,7 +58,7 @@ export class DockerClass {
                             }
                         }
                     },
-                    ports: this.ports,
+                    ports: this.ports.map(port => port.toString()), // Garantindo que seja um array de strings
                     environment: this.envs
                 };
 
@@ -71,6 +71,12 @@ export class DockerClass {
                         service.environment = [];
                     }
                     service.environment.push(...this.envs);
+
+                    // Atualiza as portas se existir, garantindo que seja uma lista
+                    if (!service.ports) {
+                        service.ports = [];
+                    }
+                    service.ports.push(...this.ports.map(port => port.toString())); // Garante que as portas sejam adicionadas como strings
                 } else {
                     // Adicionar novo serviço
                     composeFile.services[this.nomeServico] = newServiceData;
@@ -83,7 +89,7 @@ export class DockerClass {
                 fs.writeFileSync(filePath, newYaml, 'utf8');
                 resolve(`Serviço '${this.nomeServico}' modificado ou adicionado com sucesso!`);
             } catch (error) {
-                reject(new Error('Um erro ocorreu ao inserir serviço no docker-compose.yml'))
+                reject(new Error('Um erro ocorreu ao inserir serviço no docker-compose.yml'));
             }
         });
     }
@@ -140,7 +146,7 @@ export interface DockerCompose {
                     };
                 };
             };
-            ports?: string;
+            ports?: Array<string>; // Mantido como Array<string>
             environment?: string[];
         };
     };
