@@ -26,6 +26,7 @@ class NginxController {
             return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string, ip: string }' });
         } 
 
+        NginxClass.removerServico(nomeServico)
         const servico = new NginxClass(nomeServico, dominio, porta, ip);
         servico.addServico().then((status) => {
             res.status(200).json({ message: status });

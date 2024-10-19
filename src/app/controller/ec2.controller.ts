@@ -6,17 +6,12 @@ export const ec2Controller =  {
     exec(
       'docker image ls --format "{{.Repository}}:{{.Tag}} {{.ID}} {{.Size}}"',
       (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar o comando: ${error.message}`);
-          return res
-            .status(500)
-            .json({ error: 'Erro ao listar as imagens Docker' });
-        }
-        if (stderr) {
+        if (error || stderr) {
           console.error(`Stderr: ${stderr}`);
+          console.error(`Erro ao executar o comando: ${error?.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar as imagens Docker' });
+            .json({ error: 'Erro ao executar o comando' });
         }
 
         const imageList = stdout
@@ -41,17 +36,12 @@ export const ec2Controller =  {
     } 
 
     exec('docker image rm ' + id, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Erro ao executar o comando: ${error.message}`);
-        return res
-          .status(500)
-          .json({ error: 'Erro ao listar as imagens Docker' });
-      }
-      if (stderr) {
+      if (error || stderr) {
         console.error(`Stderr: ${stderr}`);
+        console.error(`Erro ao executar o comando: ${error?.message}`);
         return res
           .status(500)
-          .json({ error: 'Erro ao listar as imagens Docker' });
+          .json({ error: 'Erro ao executar o comando' });
       }
 
       console.log(stdout);
@@ -60,19 +50,14 @@ export const ec2Controller =  {
   },
   iniciarCluster(req: Request, res: Response) {
     exec(
-      `docker stack deploy -c docker-compose appHubCluster`,
+      `docker stack deploy -c docker-compose.yml appHubCluster`,
       (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar o comando: ${error.message}`);
-          return res
-            .status(500)
-            .json({ error: 'Erro ao listar os containers' });
-        }
-        if (stderr) {
+        if (error || stderr) {
           console.error(`Stderr: ${stderr}`);
+          console.error(`Erro ao executar o comando: ${error?.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers' });
+            .json({ error: 'Erro ao executar o comando' });
         }
 
         console.log(stdout);
@@ -82,17 +67,12 @@ export const ec2Controller =  {
   },
   removerCluster(req: Request, res: Response) {
     exec('docker stack rm appHubCluster', (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Erro ao executar o comando: ${error.message}`);
-        return res
-          .status(500)
-          .json({ error: 'Erro ao listar os containers do docker' });
-      }
-      if (stderr) {
+      if (error || stderr) {
         console.error(`Stderr: ${stderr}`);
+        console.error(`Erro ao executar o comando: ${error?.message}`);
         return res
           .status(500)
-          .json({ error: 'Erro ao listar os containers do docker' });
+          .json({ error: 'Erro ao executar o comando' });
       }
 
       console.log(stdout);
@@ -101,17 +81,12 @@ export const ec2Controller =  {
   },
   clearDocker(req: Request, res: Response) {
     exec('docker system prune -a --volumes -f', (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar o comando: ${error.message}`);
-          return res
-            .status(500)
-            .json({ error: 'Erro ao listar os containers do docker' });
-        }
-        if (stderr) {
+        if (error || stderr) {
           console.error(`Stderr: ${stderr}`);
+          console.error(`Erro ao executar o comando: ${error?.message}`);
           return res
             .status(500)
-            .json({ error: 'Erro ao listar os containers do docker' });
+            .json({ error: 'Erro ao executar comando' });
         }
 
         console.log(stdout);
@@ -120,33 +95,27 @@ export const ec2Controller =  {
     );
   },
   clearDockerAllData(req: Request, res: Response) {
-    exec(
-      `
-        docker stop $(docker ps -q) || true
-        docker rm $(docker ps -a -q) || true
-        docker rmi $(docker images -q) || true
-        docker volume rm $(docker volume ls -q) || true
-        docker network rm $(docker network ls -q) || true
-        docker builder prune -a -f
-        sudo rm -rf /var/lib/docker/containers/*/*.log
-        sudo rm -rf /var/lib/docker
-      `, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Erro ao executar o comando: ${error.message}`);
-          return res
-            .status(500)
-            .json({ error: 'Erro ao listar os containers do docker' });
-        }
-        if (stderr) {
-          console.error(`Stderr: ${stderr}`);
-          return res
-            .status(500)
-            .json({ error: 'Erro ao listar os containers do docker' });
-        }
-
-        console.log(stdout);
-        return res.status(200).json('All Docker Data has been deleted');
+    exec(`
+      yes | docker stop $(docker ps -q) &&
+      yes | docker rm $(docker ps -a -q) &&
+      yes | docker rmi $(docker images -q) &&
+      yes | docker volume rm $(docker volume ls -q) &&
+      yes | docker network rm $(docker network ls -q) &&
+      yes | docker builder prune -a -f &&
+      sudo rm -rf /var/lib/docker/containers/*/*.log &&
+      sudo rm -rf /var/lib/docker
+    `, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Erro ao executar o comando: ${error.message}`);
+        return res.status(500).json({ error: 'Erro ao executar os comandos' });
       }
-    );
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`);
+        return res.status(500).json({ error: `Erro no Docker: ${stderr}` });
+      }
+    
+      console.log(`Saída: ${stdout}`);
+      return res.status(200).json('All Docker Data has been deleted');
+    });
   }
 }

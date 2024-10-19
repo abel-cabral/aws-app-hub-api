@@ -28,6 +28,7 @@ class DockerController {
         const service = new DockerClass(nomeServico, tag, image, replicas, memory, ports, envs);
         try {
             // Adicionar ou modificar o serviço com novas variáveis de ambiente
+            await DockerClass.removerServico(nomeServico);
             const response = await service.inserirServico();
             res.status(200).json({ message: response });
         } catch (error: any) {
