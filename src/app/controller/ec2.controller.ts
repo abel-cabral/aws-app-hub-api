@@ -61,7 +61,7 @@ export const ec2Controller =  {
         }
 
         console.log(stdout);
-        return res.status(200).json(`Iniciando subido do cluster`);
+        return res.status(200).json(`Iniciando cluster`);
       }
     );
   },
@@ -76,7 +76,7 @@ export const ec2Controller =  {
       }
 
       console.log(stdout);
-      return res.status(200).json(`Iniciando remoção do cluster`);
+      return res.status(200).json(`Parando cluster`);
     });
   },
   clearDocker(req: Request, res: Response) {

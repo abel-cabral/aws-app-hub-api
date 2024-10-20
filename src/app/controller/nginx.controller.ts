@@ -20,14 +20,14 @@ class NginxController {
     }
 
     async inserirServico(req: Request, res: Response) {
-        const { nomeServico, dominio, porta, ip } = req.body;
+        const { nomeServico, dominio, porta } = req.body;
 
-        if (!nomeServico || !dominio || !porta || !ip) {
-            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string, ip: string }' });
+        if (!nomeServico || !dominio || !porta) {
+            return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string }' });
         } 
 
         NginxClass.removerServico(nomeServico)
-        const servico = new NginxClass(nomeServico, dominio, porta, ip);
+        const servico = new NginxClass(nomeServico, dominio, porta);
         servico.addServico().then((status) => {
             res.status(200).json({ message: status });
         }).catch((error) => {
@@ -37,18 +37,18 @@ class NginxController {
 
     async removerServico(req: Request, res: Response) {
         const { nomeServico } = req.body;
-
+    
         if (!nomeServico) {
             return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string }' });
         } 
-
-        NginxClass.removerServico(nomeServico)
-            .then((status) => {
-                res.status(200).json({ message: status });
-            })
-            .catch((error) => {
-                res.status(500).json({ error: error?.message });
-            });
+    
+        try {
+            const status = await NginxClass.removerServico(nomeServico);
+            return res.status(200).json({ message: status });
+        } catch (error: any) {
+            // Aqui você pode enviar uma resposta adequada para erros
+            return res.status(500).json({ error: error?.message });
+        }
     }
 
     reiniciarNginx(req: Request, res: Response) {

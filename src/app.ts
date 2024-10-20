@@ -1,5 +1,8 @@
 import express from "express";
 import { router } from "./router";
+import { healthController } from "./app/controller/health.controller";
+
+healthController.getPublicIP();
 
 const server = express();
 

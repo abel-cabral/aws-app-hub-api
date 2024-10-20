@@ -49,5 +49,18 @@ export const healthController = {
   
       res.status(200).json({ diskInfo });
     });
+  },
+  getPublicIP() {
+    exec('dig +short myip.opendns.com @resolver1.opendns.com', (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Erro ao obter IP público: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`Erro: ${stderr}`);
+        return;
+      }
+      process.env.IPADDRESS = stdout.trim();
+  });
   }
 }
