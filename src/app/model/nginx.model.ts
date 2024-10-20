@@ -64,7 +64,7 @@ export class NginxClass {
                 }
 
                 // Adiciona o novo upstream na marca 01
-                const upstreamToAdd = `    upstream ${this.nomeServico} { server ${this.ip}:${this.porta}; }`;
+                const upstreamToAdd = `    upstream ${this.nomeServico} { server 172.17.0.1:${this.porta}; }`;
                 const upstreamSection = data.replace(
                     /(# MARCA DE INSERCAO AUTOMATICA 01)/,
                     `$1\n${upstreamToAdd}`
