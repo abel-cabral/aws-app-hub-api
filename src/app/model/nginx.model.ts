@@ -19,59 +19,58 @@ export class NginxClass {
         this.dominio = dominio;
     }
 
-    addServico() {
+    async addServico() {
         const filePath: string = path.resolve(process.cwd(), configPath);
-
-        return new Promise((resolve, reject) => {
-            // Lê o arquivo de configuração
-            fs.readFile(filePath, 'utf8', (err, data) => {
-                if (err) {
-                    reject(new Error(`Erro ao ler o arquivo: ${err.message}`));
-                    return;
-                }
-
-                // Verifica se o nome do serviço já existe
-                const serviceExists = new RegExp(
-                    `\\s*upstream\\s+${this.nomeServico}\\s*\\{`
-                ).test(data);
-                if (serviceExists) {
-                    reject(
-                        new Error(
-                            `O nome de serviço "${this.nomeServico}" já existe no arquivo.`
-                        )
-                    );
-                    return;
-                }
-
-                // Verifica se a porta já está em uso por outro serviço
-                const portRegex = new RegExp(`server\\s+[^:]+:${this.porta}\\s*;`);
-                if (portRegex.test(data)) {
-                    reject(
-                        new Error(`A porta ${this.porta} já está em uso por outro serviço.`)
-                    );
-                    return;
-                }
-
-                // Verifica se o domínio já está em uso
-                const domainRegex = new RegExp(`\\s*${this.dominio}\\s+\\S+;`);
-                if (domainRegex.test(data)) {
-                    reject(
-                        new Error(
-                            `O domínio "${this.dominio}" já está associado a outro serviço.`
-                        )
-                    );
-                    return;
-                }
-
-                // Adiciona o novo upstream na marca 01
-                const upstreamToAdd = `    upstream ${this.nomeServico} { server 172.17.0.1:${this.porta}; }`;
-                const upstreamSection = data.replace(
-                    /(# MARCA DE INSERCAO AUTOMATICA 01)/,
-                    `$1\n${upstreamToAdd}`
-                );
-
-                // Adiciona o novo bloco de server na marca 02
-                const serverBlockToAdd = `
+    
+        try {
+            let data = await fs.promises.readFile(filePath, 'utf8');
+    
+            // Verifica e adiciona a seção 'events' se não existir
+            if (!data.includes('events {')) {
+                data = `events {\n    worker_connections 1024;  # Número máximo de conexões por worker\n}\n\n` + data;
+            }
+    
+            // Verifica e adiciona a seção 'http' se não existir
+            if (!data.includes('http {')) {
+                const httpSection = `
+    http {
+        # MARCA DE INSERCAO AUTOMATICA 01
+        # MARCA DE INSERCAO AUTOMATICA 02
+    }
+    `;
+                data += httpSection;
+            }
+    
+            // Verifica se o nome do serviço já existe
+            const serviceExists = new RegExp(`\\s*upstream\\s+${this.nomeServico}\\s*\\{`).test(data);
+            if (serviceExists) {
+                throw new Error(`O nome de serviço "${this.nomeServico}" já existe no arquivo.`);
+            }
+    
+            // Verifica se a porta já está em uso por outro serviço
+            const portRegex = new RegExp(`server\\s+[^:]+:${this.porta}\\s*;`);
+            if (portRegex.test(data)) {
+                throw new Error(`A porta ${this.porta} já está em uso por outro serviço.`);
+            }
+    
+            // Verifica se o domínio já está em uso
+            const domainRegex = new RegExp(`\\b${this.dominio}\\b\\s+\\S+;`);
+            if (domainRegex.test(data)) {
+                throw new Error(`O domínio "${this.dominio}" já está associado a outro serviço.`);
+            }
+    
+            // Cria o novo bloco de upstream
+            const upstreamToAdd = `    upstream ${this.nomeServico} { server 172.17.0.1:${this.porta}; }`;
+            
+            // Insere o novo upstream na seção correta
+            data = data.replace(
+                /(# MARCA DE INSERCAO AUTOMATICA 01)/,
+                `$1\n${upstreamToAdd}`
+            );
+    
+            // Cria o novo bloco de server
+            const serverBlockToAdd = `
+        # INIT ${this.nomeServico}
         server {
             listen 80;
             server_name ${this.dominio};
@@ -82,80 +81,67 @@ export class NginxClass {
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
                 proxy_set_header X-Forwarded-Proto $scheme;  # Use o esquema da requisição original (http ou https)
             }
-        }`;
-
-                // Adiciona o bloco do servidor na posição correta
-                const finalConfig = upstreamSection.replace(
-                    /(# MARCA DE INSERCAO AUTOMATICA 02)/,
-                    `$1\n${serverBlockToAdd}`
-                );
-
-                // Escreve de volta no arquivo
-                fs.writeFile(filePath, finalConfig, 'utf8', (err) => {
-                    if (err) {
-                        reject(new Error(`Erro ao escrever no arquivo: ${err.message}`));
-                        return;
-                    }
-                    resolve(
-                        `Upstream ${this.nomeServico} e servidor ${this.dominio} adicionados com sucesso.`
-                    );
-                });
-            });
-        });
+        }
+        # END ${this.nomeServico}`;
+    
+            // Insere o novo bloco de server na seção correta
+            data = data.replace(
+                /(# MARCA DE INSERCAO AUTOMATICA 02)/,
+                `$1\n${serverBlockToAdd}`
+            );
+    
+            // Escreve de volta no arquivo
+            await fs.promises.writeFile(filePath, data, 'utf8');
+            return `Upstream ${this.nomeServico} e servidor ${this.dominio} adicionados com sucesso.`;
+        } catch (err: any) {
+            throw new Error(`Erro ao processar o arquivo: ${err.message}`);
+        }
     }
 
     static removerServico(nomeServico: string) {
         const filePath: string = path.resolve(process.cwd(), configPath);
-
-        return new Promise((resolve) => {
-            // Removido o reject
+    
+        return new Promise((resolve, reject) => {
+            // Lê o arquivo de configuração
             fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
-                    // Se ocorrer um erro ao ler o arquivo, rejeitamos a promessa
-                    return resolve(`Erro ao ler o arquivo: ${err.message}`);
+                    reject(new Error(`Erro ao ler o arquivo: ${err.message}`));
+                    return;
                 }
-
-                // Regex para encontrar e remover o upstream
+    
+                // Regex para encontrar o bloco de upstream do serviço
                 const upstreamRegex = new RegExp(
-                    `\\s*upstream ${nomeServico} \\{[^\\}]*\\}`,
+                    `\\s*upstream\\s+${nomeServico}\\s*\\{[^\\}]*\\}`,
                     'g'
                 );
-                const upstreamMatch = upstreamRegex.exec(data);
-
-                // Se o upstream não for encontrado, logar e continuar
-                if (!upstreamMatch) {
-                    console.log(
-                        `Upstream "${nomeServico}" não encontrado no arquivo. Nenhuma alteração feita.`
-                    );
-                    return resolve(
-                        `Upstream "${nomeServico}" não encontrado. Nenhuma alteração foi feita.`
-                    );
+    
+                // Regex para encontrar o bloco de configuração do servidor
+                const serviceBlockRegex = new RegExp(
+                    `# INIT\\s+${nomeServico}\\s+([\\s\\S]*?)# END\\s+${nomeServico}`,
+                    'g'
+                );
+    
+                // Verifica se o bloco do serviço existe
+                if (!serviceBlockRegex.test(data) && !upstreamRegex.test(data)) {
+                    resolve(`O serviço "${nomeServico}" não foi encontrado no arquivo.`);
+                    return;
                 }
-
-                const updatedUpstreamSection = data.replace(upstreamRegex, '');
-
-                // Regex para encontrar e remover a linha no map
-                const mapRegex = new RegExp(`\\s*\\b\\S+\\b\\s+${nomeServico};`, 'g');
-                const mapMatch = mapRegex.exec(updatedUpstreamSection);
-
-                // Se o map não for encontrado, logar e continuar
-                if (!mapMatch) {
-                    console.log(
-                        `Map para "${nomeServico}" não encontrado no arquivo. Nenhuma alteração feita.`
-                    );
-                    return resolve(
-                        `Map para "${nomeServico}" não encontrado. Nenhuma alteração foi feita.`
-                    );
-                }
-
-                const updatedMapSection = updatedUpstreamSection.replace(mapRegex, '');
-
-                // Escrever de volta no arquivo
-                fs.writeFile(filePath, updatedMapSection, 'utf8', (err) => {
+    
+                // Remove o bloco do serviço e o upstream
+                let updatedConfig = data.replace(upstreamRegex, ''); // Remove o upstream
+                updatedConfig = updatedConfig.replace(serviceBlockRegex, ''); // Remove o bloco do servidor
+    
+                // Remove linhas em branco extras
+                updatedConfig = updatedConfig.replace(/\n\s*\n/g, '\n'); // Remove linhas em branco
+                updatedConfig = updatedConfig.trim(); // Remove espaços em branco no início e no final do arquivo
+    
+                // Escreve de volta no arquivo
+                fs.writeFile(filePath, updatedConfig, 'utf8', (err) => {
                     if (err) {
-                        return resolve(`Erro ao escrever no arquivo: ${err.message}`);
+                        reject(new Error(`Erro ao escrever no arquivo: ${err.message}`));
+                        return;
                     }
-                    resolve(`Serviço "${nomeServico}" foi removido com sucesso.`);
+                    resolve(`Serviço "${nomeServico}" removido com sucesso.`);
                 });
             });
         });

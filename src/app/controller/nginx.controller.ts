@@ -26,13 +26,14 @@ class NginxController {
             return res.status(400).json({ error: 'Verifique o objeto enviado: { nomeServico: string , dominio: string, porta: string }' });
         } 
 
-        NginxClass.removerServico(nomeServico)
         const servico = new NginxClass(nomeServico, dominio, porta);
-        servico.addServico().then((status) => {
-            res.status(200).json({ message: status });
-        }).catch((error) => {
-            res.status(500).json({ error: error?.message });
-        });
+        try {
+            await NginxClass.removerServico(nomeServico);
+            const response = await servico.addServico();
+            res.status(200).json({ message: response });
+        } catch (error: any) {
+            res.status(500).json({ message: error?.message });
+        }
     }
 
     async removerServico(req: Request, res: Response) {
