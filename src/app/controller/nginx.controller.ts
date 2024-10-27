@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { NginxClass } from '../model/nginx.model';
-import { downloadFileFromGitHub } from '../service/ec2-service';
+import { downloadFileFromGitHub } from '../service/github-service';
 
 class NginxController {
     async createNginxConfig(req: Request, res: Response) {
