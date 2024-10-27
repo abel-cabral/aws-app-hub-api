@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { downloadFileFromGitHub } from '../service/ec2-service';
+import { downloadFileFromGitHub } from '../service/github-service';
 import { DockerClass } from '../model/docker.model';
 
 class DockerController {

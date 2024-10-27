@@ -1,10 +1,13 @@
 import express from "express";
+import cors from "cors";
 import { router } from "./router";
 import { healthController } from "./app/controller/health.controller";
 
 healthController.getPublicIP();
 
 const server = express();
+
+server.use(cors());
 
 // Middleware
 server.use(express.json());

@@ -149,34 +149,34 @@ export class NginxClass {
 
     static async listarServicos(): Promise<{ nome: string, dominio: string, porta: string, ip: string }[]> {
         const filePath: string = path.resolve(process.cwd(), configPath);
-
+    
         try {
             const data = await fs.promises.readFile(filePath, 'utf8');
             const servicos: { nome: string, dominio: string, porta: string, ip: string }[] = [];
-
+    
             // Regex para identificar blocos de upstream e server
-            const upstreamRegex = /upstream\s+(\w+)\s*\{\s*server\s+(\S+):(\d+);/g;
+            const upstreamRegex = /upstream\s+([a-zA-Z0-9_\-]+)\s*\{\s*server\s+([\d.]+):(\d+);/g;
             const serverRegex = /server\s*\{\s*listen\s+80;\s*server_name\s+(\S+);/g;
-
+    
             let upstreamMatch, serverMatch;
-
+    
             // Extrai informações dos blocos de upstream
             while ((upstreamMatch = upstreamRegex.exec(data)) !== null) {
-                const [_, nomeServico, ip, porta] = upstreamMatch;
+                const [, nomeServico, ip, porta] = upstreamMatch;
                 servicos.push({ nome: nomeServico, dominio: '', porta, ip });
             }
-
+    
             // Associa os domínios encontrados nos blocos de server com os serviços
             let servicoIndex = 0;
             while ((serverMatch = serverRegex.exec(data)) !== null) {
-                const [_, dominio] = serverMatch;
-
+                const [, dominio] = serverMatch;
+    
                 if (servicoIndex < servicos.length) {
                     servicos[servicoIndex].dominio = dominio;
                     servicoIndex++;
                 }
             }
-
+    
             return servicos;
         } catch (err: any) {
             throw new Error(`Erro ao ler o arquivo: ${err.message}`);
