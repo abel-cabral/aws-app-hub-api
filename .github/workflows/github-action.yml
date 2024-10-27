@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # Use o token de autenticação do GitHub Actions
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -48,10 +50,19 @@ jobs:
           path: "./v${{ env.VERSION }}.zip"
 
       - name: Criar e subir tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Verifica se a tag já existe no remoto
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ env.VERSION }}"; then
+            echo "A tag v${{ env.VERSION }} já existe. Deletando-a para recriação."
+            git tag -d "v${{ env.VERSION }}"  # Deleta a tag localmente
+            git push origin --delete "v${{ env.VERSION }}"  # Deleta a tag no repositório remoto
+          fi
+          
+          # Cria e envia a nova tag
           git tag "v${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
