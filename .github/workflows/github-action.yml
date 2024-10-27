@@ -48,14 +48,14 @@ jobs:
         working-directory: ./build
         run: zip -r "../v${{ env.VERSION }}.zip" ./*
 
-      # Anexar o zip aos artefatos da ação
+      # Anexar o zip aos artefatos da ação (atualizado para v4)
       - name: Upload do arquivo zip como artefato
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "v${{ env.VERSION }}.zip"
           path: "./v${{ env.VERSION }}.zip"
 
-      # Criar e subir a tag da versão
+      # Criar e subir tag da versão
       - name: Criar e subir tag
         env:
           VERSION: ${{ env.VERSION }}
