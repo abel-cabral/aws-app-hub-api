@@ -40,8 +40,9 @@ jobs:
           fi
 
       - name: Compactar arquivos da build
-        working-directory: ./build
-        run: zip -r "../v${{ env.VERSION }}.zip" ./*
+        run: |
+          cd build
+          zip -r "../v${{ env.VERSION }}.zip" ./*
 
       - name: Upload do arquivo zip como artefato
         uses: actions/upload-artifact@v4
