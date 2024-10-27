@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # Use o token de autenticação do GitHub Actions
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -32,7 +34,7 @@ jobs:
       - name: Verificar se a versão já está publicada
         id: verificar_versao
         run: |
-          if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ env.VERSION }}"; then
             echo "A versão ${{ env.VERSION }} já está publicada."
             exit 1
           fi
@@ -49,11 +51,35 @@ jobs:
 
       - name: Criar e subir tag
         env:
-          VERSION: ${{ env.VERSION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Verifica e deleta a tag apenas no repositório remoto
+          if git ls-remote --tags origin | grep -q "refs/tags/v${{ env.VERSION }}"; then
+            echo "A tag v${{ env.VERSION }} já existe remotamente. Deletando-a para recriação."
+            git push origin --delete "v${{ env.VERSION }}"  # Deleta a tag no repositório remoto
+          fi
+          
+          # Cria e envia a nova tag
           git tag "v${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}
+
+      - name: Criar Release no GitHub
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const version = process.env.VERSION;
+            const release_name = `v${version}`;
+            const release_notes = `Release da versão ${release_name}`;
+            
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: release_name,
+              name: release_name,
+              body: release_notes,
+              draft: false,
+              prerelease: false
+            });
