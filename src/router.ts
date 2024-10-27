@@ -22,10 +22,11 @@ router.delete("/api/docker/cleanAll", checkCredentials, ec2Controller.clearDocke
 router.post("/api/compose/create", checkCredentials, dockerController.createDockerCompose);
 router.put("/api/compose/addService", checkCredentials, dockerController.inserirServico);
 router.delete("/api/compose/removeService", checkCredentials, dockerController.removerServico);
+router.get("/api/compose/listService", checkCredentials, dockerController.listarServico);
 
 router.post("/api/nginx/create", checkCredentials, nginxController.createNginxConfig);
 router.put("/api/nginx/addService", checkCredentials, nginxController.inserirServico);
 router.delete("/api/nginx/removeService", checkCredentials, nginxController.removerServico);
-router.post("/api/nginx/resetNginx", checkCredentials, nginxController.reiniciarNginx);
+router.get("/api/nginx/listService", checkCredentials, nginxController.listarServico);
 
 export { router };

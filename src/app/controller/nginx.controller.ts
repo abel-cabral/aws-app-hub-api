@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { NginxClass } from '../model/nginx.model';
-import { exec } from 'child_process';
 import { downloadFileFromGitHub } from '../service/ec2-service';
 
 class NginxController {
@@ -44,28 +43,22 @@ class NginxController {
         } 
     
         try {
-            const status = await NginxClass.removerServico(nomeServico);
-            return res.status(200).json({ message: status });
+            const response = await NginxClass.removerServico(nomeServico);
+            return res.status(200).json({ message: response });
         } catch (error: any) {
             // Aqui você pode enviar uma resposta adequada para erros
             return res.status(500).json({ error: error?.message });
         }
     }
 
-    reiniciarNginx(req: Request, res: Response) {
-        exec('systemctl reload nginx', (error, stdout, stderr) => {
-            if (error) {
-                return res
-                    .status(500)
-                    .json({ error: error.message });
-            }
-            if (stderr) {
-                return res
-                    .status(500)
-                    .json({ error: stderr });
-            }
-            res.json(`Serviço Nginx Reiniciado`);
-        });
+    async listarServico(req: Request, res: Response) {
+        try {
+            const response = await NginxClass.listarServicos()
+            return res.status(200).json(response);
+        } catch (error: any) {
+            // Aqui você pode enviar uma resposta adequada para erros
+            return res.status(500).json({ error: error?.message });
+        }
     }
 }
 

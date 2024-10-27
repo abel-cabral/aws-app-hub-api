@@ -28,7 +28,11 @@ class DockerController {
         const service = new DockerClass(nomeServico, tag, image, replicas, memory, ports, envs);
         try {
             // Adicionar ou modificar o serviço com novas variáveis de ambiente
-            await DockerClass.removerServico(nomeServico);
+            try {
+                await DockerClass.removerServico(nomeServico);
+            } catch (error: any) {
+                console.log(error.message);
+            }
             const response = await service.inserirServico();
             res.status(200).json({ message: response });
         } catch (error: any) {
@@ -47,6 +51,18 @@ class DockerController {
             // Adicionar ou modificar o serviço com novas variáveis de ambiente
             const response = await DockerClass.removerServico(nomeServico);
             res.status(200).json({ message: response });
+        } catch (error: any) {
+            res.status(500).json({ message: error?.message });
+        }
+    }
+
+    async listarServico(req: Request, res: Response) {
+        const arr = ["cleaner", "watchtower", "nginx"];
+        try {
+            // Adicionar ou modificar o serviço com novas variáveis de ambiente
+            const response = await DockerClass.listarServicos();
+            const filtrado = response.filter(el => !arr.includes(el.nome))
+            res.status(200).json(filtrado);
         } catch (error: any) {
             res.status(500).json({ message: error?.message });
         }

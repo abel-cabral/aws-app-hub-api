@@ -10,8 +10,8 @@ export class DockerClass {
     image: string;
     replicas: number;
     memory: string;
-    ports: Array<string>; // Mantido como Array<string>
-    envs: Array<string>;
+    ports: string[];
+    envs: string[];
 
     constructor(
         nomeServico: string,
@@ -19,7 +19,7 @@ export class DockerClass {
         image: string,
         replicas: number,
         memory: string,
-        ports: string[], // Aqui ainda usamos string[], mas será tratado como lista
+        ports: string[],
         envs: string[]
     ) {
         this.nomeServico = nomeServico;
@@ -27,104 +27,131 @@ export class DockerClass {
         this.image = image;
         this.replicas = replicas;
         this.memory = memory;
-        this.ports = ports; // Armazena como uma lista
+        this.ports = ports;
         this.envs = envs;
     }
 
-    inserirServico(parallelism = 1) {
-        // Caminho para o arquivo docker-compose.yml
+    async inserirServico(parallelism = 1): Promise<string> {
         const filePath: string = path.resolve(process.cwd(), configPath);
-
-        return new Promise((resolve, reject) => {
-            try {
-                // 1. Ler o arquivo YAML
-                const fileContents = fs.readFileSync(filePath, 'utf8');
-
-                // 2. Fazer o parse do YAML para um objeto JavaScript
-                const composeFile: DockerCompose = yaml.load(fileContents) as DockerCompose;
-
-                // 3. Preparar os dados do novo serviço com base nos atributos da instância
-                const newServiceData = {
-                    image: `${this.image}:${this.tag}`, // Usa os atributos da classe
-                    deploy: {
-                        replicas: this.replicas,
-                        update_config: {
-                            parallelism: parallelism,
-                            delay: '10s'
-                        },
-                        resources: {
-                            limits: {
-                                memory: this.memory
-                            }
-                        }
-                    },
-                    ports: this.ports.map(port => port.toString()), // Garantindo que seja um array de strings
-                    environment: this.envs
-                };
-
-                // 4. Verificar se o serviço já existe
-                if (composeFile.services[this.nomeServico]) {
-                    const service = composeFile.services[this.nomeServico];
-
-                    // Atualiza as variáveis de ambiente se existir
-                    if (!service.environment) {
-                        service.environment = [];
-                    }
-                    service.environment.push(...this.envs);
-
-                    // Atualiza as portas se existir, garantindo que seja uma lista
-                    if (!service.ports) {
-                        service.ports = [];
-                    }
-                    service.ports.push(...this.ports.map(port => port.toString())); // Garante que as portas sejam adicionadas como strings
-                } else {
-                    // Adicionar novo serviço
-                    composeFile.services[this.nomeServico] = newServiceData;
+    
+        try {
+            const composeFile = DockerClass.carregarYaml(filePath);
+    
+            // Verifica se as portas já estão em uso por outros serviços
+            const portasEmUso = new Set<string>();
+            for (const serviceName in composeFile.services) {
+                const service = composeFile.services[serviceName];
+                if (service.ports) {
+                    service.ports.forEach(port => portasEmUso.add(port.toString()));
                 }
-
-                // 5. Converter o objeto modificado de volta para YAML
-                const newYaml = yaml.dump(composeFile, { lineWidth: -1 });
-
-                // 6. Escrever o novo conteúdo de volta ao arquivo
-                fs.writeFileSync(filePath, newYaml, 'utf8');
-                resolve(`Serviço '${this.nomeServico}' modificado ou adicionado com sucesso!`);
-            } catch (error) {
-                reject(new Error('Um erro ocorreu ao inserir serviço no docker-compose.yml'));
             }
-        });
+    
+            // Checa se alguma porta do novo serviço já está em uso
+            for (const port of this.ports) {
+                if (portasEmUso.has(port.toString())) {
+                    throw new Error(`A porta ${port} já está em uso por outro serviço.`);
+                }
+            }
+    
+            // Prepara os dados do novo serviço
+            const newServiceData = this.criarDadosServico(parallelism);
+    
+            // Atualiza ou adiciona o serviço
+            if (composeFile.services[this.nomeServico]) {
+                this.atualizarServicoExistente(composeFile.services[this.nomeServico]);
+            } else {
+                composeFile.services[this.nomeServico] = newServiceData;
+            }
+    
+            DockerClass.salvarYaml(filePath, composeFile);
+            return `Serviço '${this.nomeServico}' modificado ou adicionado com sucesso!`;
+        } catch (error: any) {
+            throw new Error(`Um erro ocorreu ao inserir o serviço no docker-compose.yml: ${error.message}`);
+        }
     }
 
-    static removerServico(nomeServico: string) {
-        // Caminho para o arquivo docker-compose.yml
+    private criarDadosServico(parallelism: number) {
+        return {
+            image: `${this.image}:${this.tag}`,
+            deploy: {
+                replicas: this.replicas,
+                update_config: { parallelism, delay: '10s' },
+                resources: { limits: { memory: this.memory } }
+            },
+            ports: this.ports.map(port => port.toString()),
+            environment: this.envs
+        };
+    }
+
+    private atualizarServicoExistente(service: any) {
+        service.environment = service.environment || [];
+        service.environment.push(...this.envs);
+
+        service.ports = service.ports || [];
+        service.ports.push(...this.ports.map(port => port.toString()));
+    }
+
+    static async removerServico(nomeServico: string): Promise<any> {
         const filePath: string = path.resolve(process.cwd(), configPath);
     
-        return new Promise((resolve, reject) => {
-            try {
-                // 1. Ler o arquivo YAML
-                const fileContents = fs.readFileSync(filePath, 'utf8');
+        try {
+            // 1. Carrega o YAML do docker-compose
+            const composeFile: any = DockerClass.carregarYaml(filePath);
     
-                // 2. Fazer o parse do YAML para um objeto JavaScript
-                const composeFile = yaml.load(fileContents) as any;
-    
-                // 3. Verificar se o serviço existe
-                if (!composeFile.services) {
-                    reject(new Error(`Serviço '${nomeServico}' não encontrado.`));
-                    return;
-                }
-    
-                // 4. Remover o serviço
-                delete composeFile.services[nomeServico];
-    
-                // 5. Converter o objeto modificado de volta para YAML
-                const newYaml = yaml.dump(composeFile, { lineWidth: -1 });
-    
-                // 6. Escrever o novo conteúdo de volta ao arquivo
-                fs.writeFileSync(filePath, newYaml, 'utf8');
-                resolve(`Serviço ${nomeServico} removido com sucesso!`);
-            } catch (error) {
-                reject(new Error('Um erro ocorreu ao remover o serviço do docker-compose.yml'));
+            // 2. Verifica se existe a seção 'services' e se o serviço especificado existe
+            if (!composeFile.services || !composeFile.services[nomeServico]) {
+                throw new Error(`Serviço '${nomeServico}' não encontrado no arquivo docker-compose.yml.`);
             }
-        });
+    
+            // 3. Remove o serviço do arquivo docker-compose
+            delete composeFile.services[nomeServico];
+    
+            // 4. Verifica se há outros serviços restantes, caso contrário, remove a chave 'services'
+            if (Object.keys(composeFile.services).length === 0) {
+                delete composeFile.services;
+            }
+    
+            // 5. Salva o YAML atualizado no arquivo
+            DockerClass.salvarYaml(filePath, composeFile);
+    
+            return `Serviço '${nomeServico}' removido com sucesso!`;
+        } catch (error: any) {
+            throw new Error(`Um erro ocorreu ao remover o serviço '${nomeServico}' do docker-compose.yml: ${error.message}`);
+        }
+    }
+
+    static listarServicos(): Array<{ nome: string, porta: string[], imagem: string, replicas?: number, memory?: string }> {
+        const filePath: string = path.resolve(process.cwd(), configPath);
+        
+        try {
+            const composeFile = DockerClass.carregarYaml(filePath);
+            const servicos: Array<{ nome: string, porta: string[], imagem: string, replicas?: number, memory?: string }> = [];
+            
+            // Percorre os serviços e transforma em JSON
+            for (const [nomeServico, dadosServico] of Object.entries(composeFile.services)) {
+                servicos.push({
+                    nome: nomeServico,
+                    porta: dadosServico.ports || [],
+                    imagem: dadosServico.image,
+                    replicas: dadosServico.deploy?.replicas,
+                    memory: dadosServico.deploy?.resources?.limits?.memory
+                });
+            }
+            
+            return servicos;
+        } catch (error: any) {
+            throw new Error(`Erro ao listar serviços do docker-compose.yml: ${error.message}`);
+        }
+    }
+
+    private static carregarYaml(filePath: string) {
+        const fileContents = fs.readFileSync(filePath, 'utf8');
+        return yaml.load(fileContents) as DockerCompose;
+    }
+
+    private static salvarYaml(filePath: string, data: DockerCompose) {
+        const newYaml = yaml.dump(data, { lineWidth: -1 });
+        fs.writeFileSync(filePath, newYaml, 'utf8');
     }
 }
 
@@ -133,20 +160,13 @@ export interface DockerCompose {
     version: string;
     services: {
         [key: string]: {
-            image: string; // Image é obrigatória
+            image: string;
             deploy?: {
                 replicas: number;
-                update_config?: {
-                    parallelism: number;
-                    delay: string;
-                };
-                resources?: {
-                    limits: {
-                        memory: string;
-                    };
-                };
+                update_config?: { parallelism: number; delay: string };
+                resources?: { limits: { memory: string } };
             };
-            ports?: Array<string>; // Mantido como Array<string>
+            ports?: string[];
             environment?: string[];
         };
     };
