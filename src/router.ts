@@ -19,6 +19,8 @@ router.delete("/api/docker/removeCluster", checkCredentials, ec2Controller.remov
 router.delete("/api/docker/clean", checkCredentials, ec2Controller.clearDocker);
 router.delete("/api/docker/cleanAll", checkCredentials, ec2Controller.clearDockerAllData);
 
+router.get("/api/stack/listAll", checkCredentials, ec2Controller.listarServicoStack);
+
 router.post("/api/compose/create", checkCredentials, dockerController.createDockerCompose);
 router.put("/api/compose/addService", checkCredentials, dockerController.inserirServico);
 router.delete("/api/compose/removeService", checkCredentials, dockerController.removerServico);

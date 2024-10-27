@@ -117,5 +117,36 @@ export const ec2Controller =  {
       console.log(`Saída: ${stdout}`);
       return res.status(200).json('All Docker Data has been deleted');
     });
+  },
+  listarServicoStack(req: Request, res: Response) {
+    return new Promise((resolve, reject) => {
+        exec('docker stack services appHubCluster', (error, stdout, stderr) => {
+            if (error) {
+                res.status(500).json({ error: `Erro ao executar o comando: ${stderr}` });
+                return;
+            }
+
+            const linhas = stdout.trim().split('\n');
+            const servicos: any[] = [];
+
+            // Ignora a primeira linha que contém o cabeçalho
+            for (const linha of linhas.slice(1)) {
+                const [id, name, mode, replicas, image, ...ports] = linha.trim().split(/\s{2,}/);
+                
+                // Remove o prefixo "appHubCluster_" do nome do serviço
+                const nomeServico = name.replace(/^appHubCluster_/, '');
+
+                servicos.push({
+                    id,
+                    name: nomeServico,
+                    mode,
+                    replicas,
+                    image,
+                    ports: ports.join(' ')
+                });
+            }
+            res.status(200).json(servicos);
+        });
+    });
   }
 }
