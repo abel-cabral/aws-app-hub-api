@@ -48,8 +48,6 @@ jobs:
           path: "./v${{ env.VERSION }}.zip"
 
       - name: Criar e subir tag
-        env:
-          VERSION: ${{ env.VERSION }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
