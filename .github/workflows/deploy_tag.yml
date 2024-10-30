@@ -52,7 +52,7 @@ jobs:
         with:
           script: |
             const version = process.env.VERSION;
-            const release_name = `Release Notes - v${version}`;
+            const release_name = `v${version}`;
             const release_notes = `Release da versão ${release_name}`;
             
             // Cria a release
