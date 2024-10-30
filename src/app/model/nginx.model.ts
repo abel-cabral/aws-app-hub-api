@@ -27,7 +27,7 @@ export class NginxClass {
 
             // Verifica e adiciona a seção 'events' se não existir
             if (!data.includes('events {')) {
-                data = `events {\n    worker_connections 1024;  # Número máximo de conexões por worker\n}\n\n` + data;
+                data = `events {\n    worker_connections 1024;  # Número máximo de conexões por worker\n}\n` + data;
             }
 
             // Verifica e adiciona a seção 'http' se não existir
@@ -38,7 +38,7 @@ export class NginxClass {
         # MARCA DE INSERCAO AUTOMATICA 02
     }
     `;
-                data += httpSection;
+                data = data.replace(/events\s*\{[^}]*\}/, match => match + httpSection);
             }
 
             // Verifica se o nome do serviço já existe
@@ -135,6 +135,14 @@ export class NginxClass {
                 updatedConfig = updatedConfig.replace(/\n\s*\n/g, '\n'); // Remove linhas em branco
                 updatedConfig = updatedConfig.trim(); // Remove espaços em branco no início e no final do arquivo
 
+                // Ensure 'events' and 'http' sections are correctly formatted
+                if (!updatedConfig.includes('events {')) {
+                    updatedConfig = `events {\n    worker_connections 1024;\n}\n\n` + updatedConfig;
+                }
+                if (!updatedConfig.includes('http {')) {
+                    updatedConfig += `\nhttp {\n    # MARCA DE INSERCAO AUTOMATICA 01\n    # MARCA DE INSERCAO AUTOMATICA 02\n}\n`;
+                }
+
                 // Escreve de volta no arquivo
                 fs.writeFile(filePath, updatedConfig, 'utf8', (err) => {
                     if (err) {
@@ -155,7 +163,7 @@ export class NginxClass {
             const servicos: { nome: string, dominio: string, porta: string, ip: string }[] = [];
     
             // Regex para identificar blocos de upstream e server
-            const upstreamRegex = /upstream\s+([a-zA-Z0-9_\-]+)\s*\{\s*server\s+([\d.]+):(\d+);/g;
+            const upstreamRegex = /upstream\s+([a-zA-Z0-9_-]+)\s*\{\s*server\s+([\d.]+):(\d+);/g;
             const serverRegex = /server\s*\{\s*listen\s+80;\s*server_name\s+(\S+);/g;
     
             let upstreamMatch, serverMatch;
